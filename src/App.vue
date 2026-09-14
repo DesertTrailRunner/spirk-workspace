@@ -1,148 +1,35 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { supabase } from './lib/supabase'
+import { onMounted } from 'vue'
+import * as Manager from './lib/manager';
 
-type Agent = { id: string; name: string; purpose: string; personality: string; knowledge_sources: string[]; created_at: string; updated_at: string }
-type Message = { role: 'user' | 'assistant'; content: string }
-const agents = ref<Agent[]>([]), selectedId = ref<string | null>(null), isLoading = ref(true), isSaving = ref(false)
-const errorMessage = ref(''), notice = ref(''), showEditor = ref(false), isEditing = ref(false)
-const activeTab = ref<'workspace' | 'knowledge'>('workspace'), messageInput = ref(''), isChatting = ref(false)
-const messages = ref<Message[]>([]), form = ref({ name: '', purpose: '', personality: '', knowledge: '' })
-const selectedAgent = computed(() => agents.value.find((agent) => agent.id === selectedId.value) ?? null)
-const knowledgeList = computed(() => selectedAgent.value?.knowledge_sources ?? [])
+import AppHeader from './components/AppHeader.vue';
+import SideBar from './components/SideBar.vue';
+import IntroPanel from './components/IntroPanel.vue';
+import AgentWorkspace from './components/AgentWorkspace.vue';
+import AgentEditor from './components/AgentEditor.vue';
 
-function resetForm() { form.value = { name: '', purpose: '', personality: '', knowledge: '' } }
-function newAgent() { resetForm(); isEditing.value = false; showEditor.value = true }
-function editAgent(agent: Agent) { selectedId.value = agent.id; form.value = { name: agent.name, purpose: agent.purpose, personality: agent.personality, knowledge: agent.knowledge_sources.join('\n') }; isEditing.value = true; showEditor.value = true }
-function selectAgent(agent: Agent) { selectedId.value = agent.id; messages.value = []; activeTab.value = 'workspace'; notice.value = '' }
-
-async function loadAgents() {
-  isLoading.value = true
-  const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
-  if (error) errorMessage.value = error.message
-  else { agents.value = data ?? []; if (!selectedId.value && agents.value[0]) selectAgent(agents.value[0]) }
-  isLoading.value = false
-}
-async function saveAgent() {
-  if (!form.value.name.trim() || !form.value.purpose.trim()) return
-  isSaving.value = true; errorMessage.value = ''
-  const payload = { name: form.value.name.trim(), purpose: form.value.purpose.trim(), personality: form.value.personality.trim(), knowledge_sources: form.value.knowledge.split('\n').map((item) => item.trim()).filter(Boolean) }
-  const result = isEditing.value && selectedId.value ? await supabase.from('agents').update(payload).eq('id', selectedId.value).select().single() : await supabase.from('agents').insert(payload).select().single()
-  if (result.error) errorMessage.value = result.error.message
-  else { const saved = result.data as Agent; agents.value = isEditing.value ? agents.value.map((agent) => agent.id === saved.id ? saved : agent) : [saved, ...agents.value]; selectedId.value = saved.id; showEditor.value = false; notice.value = isEditing.value ? 'Agent updated' : 'Agent created'; messages.value = [] }
-  isSaving.value = false
-}
-async function deleteAgent() {
-  if (!selectedAgent.value || !window.confirm(`Delete ${selectedAgent.value.name}?`)) return
-  const { error } = await supabase.from('agents').delete().eq('id', selectedAgent.value.id)
-  if (error) errorMessage.value = error.message
-  else { agents.value = agents.value.filter((agent) => agent.id !== selectedAgent.value?.id); selectedId.value = agents.value[0]?.id ?? null; messages.value = []; notice.value = 'Agent deleted' }
-}
-async function sendMessage() {
-  const content = messageInput.value.trim()
-  if (!content || !selectedAgent.value || isChatting.value) return
-  messages.value.push({ role: 'user', content }); messageInput.value = ''; isChatting.value = true; errorMessage.value = ''
-  try { const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent: selectedAgent.value, messages: messages.value }) }); const data = await response.json(); if (!response.ok) throw new Error(data.error ?? 'The agent could not respond.'); messages.value.push({ role: 'assistant', content: data.content }) }
-  catch (error) { errorMessage.value = error instanceof Error ? error.message : 'The agent could not respond.' }
-  finally { isChatting.value = false }
-}
-onMounted(loadAgents)
+onMounted(Manager.loadAgents)
 </script>
 
 <template>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-mark">e</span><span>eyns<span class="muted">/</span>agent</span></div>
-      <div class="topbar-meta"><span class="status-dot"></span> Workspace <span class="muted">/</span> personal</div>
-      <button class="avatar" title="Account">H</button>
+      <AppHeader />
     </header>
     <div class="app-layout">
       <aside class="sidebar">
-        <div class="sidebar-heading"><span>Your agents</span><span>{{ agents.length }}</span></div><button
-          class="new-agent" @click="newAgent"><span>+</span> New agent</button>
-        <div v-if="isLoading" class="empty-state">Loading agents...</div>
-        <div v-else-if="!agents.length" class="empty-state">Your first agent starts here.</div><button
-          v-for="agent in agents" :key="agent.id" class="agent-row" :class="{ active: selectedId === agent.id }"
-          @click="selectAgent(agent)"><span class="agent-icon">{{ agent.name.slice(0, 1).toUpperCase() }}</span><span
-            class="agent-row-copy"><strong>{{ agent.name }}</strong><small>{{ agent.purpose }}</small></span><span
-            v-if="selectedId === agent.id" class="chevron">›</span></button>
-        <div class="sidebar-footer">? &nbsp; Help & documentation <span>↗</span></div>
+        <SideBar />
       </aside>
       <main class="main-content">
-        <div v-if="!selectedAgent" class="welcome-panel"><span class="eyebrow">AGENT STUDIO</span>
-          <h1>Make something<br><em>useful.</em></h1>
-          <p>Design an AI companion with a point of view, a purpose, and the context to do its best work.</p><button
-            class="primary-button" @click="newAgent">Create your first agent <span>→</span></button>
-        </div>
-        <template v-else>
-          <section class="agent-header">
-            <div><span class="eyebrow">AGENT WORKSPACE</span>
-              <h1>{{ selectedAgent.name }}</h1>
-              <p>{{ selectedAgent.purpose }}</p>
-            </div>
-            <div class="header-actions"><button class="secondary-button" @click="editAgent(selectedAgent)">Edit
-                agent</button><button class="danger-button" title="Delete agent" @click="deleteAgent">⌫</button></div>
-          </section>
-          <nav class="tabs"><button :class="{ active: activeTab === 'workspace' }"
-              @click="activeTab = 'workspace'">Chat</button><button :class="{ active: activeTab === 'knowledge' }"
-              @click="activeTab = 'knowledge'">Knowledge <span>{{ knowledgeList.length }}</span></button></nav>
-          <section v-if="activeTab === 'workspace'" class="chat-panel">
-            <div v-if="!messages.length" class="chat-empty">
-              <div class="spark">✦</div>
-              <h2>Say hello to {{ selectedAgent.name }}</h2>
-              <p>Your agent is ready. Ask it anything within its purpose.</p>
-              <div class="suggestions"><button @click="messageInput = 'What can you help me with?'">What can you help me
-                  with?</button><button @click="messageInput = 'Give me a quick introduction.'">Give me a quick
-                  introduction.</button></div>
-            </div>
-            <div v-else class="messages">
-              <div v-for="(message, index) in messages" :key="index" class="message" :class="message.role"><span
-                  class="message-label">{{ message.role === 'user' ? 'YOU' : selectedAgent.name.toUpperCase() }}</span>
-                <p>{{ message.content }}</p>
-              </div>
-              <div v-if="isChatting" class="typing">{{ selectedAgent.name }} is thinking...</div>
-            </div>
-            <form class="composer" @submit.prevent="sendMessage"><textarea v-model="messageInput" rows="1"
-                :placeholder="`Message ${selectedAgent.name}...`"
-                @keydown.enter.exact.prevent="sendMessage"></textarea><button type="submit" class="send-button"
-                :disabled="!messageInput.trim() || isChatting" title="Send message">↑</button></form><small
-              class="disclaimer">AI can make mistakes. Check important information.</small>
-          </section>
-          <section v-else class="knowledge-panel">
-            <div class="section-intro"><span class="eyebrow">CONTEXT LIBRARY</span>
-              <h2>What {{ selectedAgent.name }} knows</h2>
-              <p>Knowledge sources are included in every conversation as context.</p>
-            </div>
-            <div v-if="knowledgeList.length" class="source-list">
-              <div v-for="(source, index) in knowledgeList" :key="source" class="source-item"><span
-                  class="source-number">0{{ index + 1 }}</span><span>{{ source }}</span></div>
-            </div>
-            <div v-else class="source-empty">No knowledge sources yet. <button @click="editAgent(selectedAgent)">Add one
-                in the editor.</button></div>
-          </section>
-        </template>
-        <div v-if="notice" class="toast">{{ notice }}</div>
-        <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
+        <IntroPanel />
+        <AgentWorkspace />
+        
+        <div v-if="Manager.notice" class="toast">{{ Manager.notice }}</div>
+        <div v-if="Manager.errorMessage" class="error-banner">{{ Manager.errorMessage }}</div>
       </main>
     </div>
-    <div v-if="showEditor" class="modal-backdrop" @click.self="showEditor = false">
-      <form class="editor-modal" @submit.prevent="saveAgent">
-        <div class="modal-heading">
-          <div><span class="eyebrow">{{ isEditing ? 'EDIT AGENT' : 'NEW AGENT' }}</span>
-            <h2>Give it a point of view.</h2>
-          </div><button type="button" class="close-button" @click="showEditor = false">×</button>
-        </div><label>Name<input v-model="form.name" required
-            placeholder="e.g. Editorial partner"></label><label>Purpose<textarea v-model="form.purpose" required
-            rows="2" placeholder="What is this agent here to help with?"></textarea></label><label>Personality<textarea
-            v-model="form.personality" rows="3"
-            placeholder="Thoughtful, concise, curious..."></textarea></label><label>Knowledge sources <span
-            class="label-hint">one per line</span><textarea v-model="form.knowledge" rows="4"
-            placeholder="https://example.com/guide&#10;Our internal product brief"></textarea></label>
-        <div class="modal-actions"><button type="button" class="secondary-button"
-            @click="showEditor = false">Cancel</button><button class="primary-button"
-            :disabled="isSaving || !form.name.trim() || !form.purpose.trim()">{{ isSaving ? 'Saving...' : isEditing ?
-              'Save changes' : 'Create agent' }} <span>→</span></button></div>
-      </form>
+    <div v-if="Manager.showEditor" class="modal-backdrop" @click.self="Manager.toggleEditor">
+      <AgentEditor />
     </div>
   </div>
 </template>
