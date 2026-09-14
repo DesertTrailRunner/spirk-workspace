@@ -8,6 +8,8 @@ import type { Agent } from './types/Agent'
 import type { Message } from './types/Message'
 
 class AgentManager {
+    public isProduction: boolean = import.meta.env.PROD;
+
     public agents: Agent[] = [];
     public formData = {
         name: '', purpose: '', personality: '', knowledge: ''
@@ -33,11 +35,15 @@ class AgentManager {
 
     public async loadAgents() {
         this.isLoading = true;
-        const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
-        if (error) this.errorMessage = error.message
-        else {
-            this.agents = data ?? [];
-            if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
+        if (this.isProduction) {
+            const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
+            if (error) this.errorMessage = error.message
+            else {
+                this.agents = data ?? [];
+                if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
+            }
+        } else {
+            console.info("load locally");
         }
         this.isLoading = false;
     }
@@ -58,11 +64,11 @@ class AgentManager {
     }
     public editAgent(agent: Agent) {
         this.selectedId = agent.id;
-        this.formData = { 
-            name: agent.name, 
-            purpose: agent.purpose, 
-            personality: agent.personality, 
-            knowledge: agent.knowledge_sources.join('\n') 
+        this.formData = {
+            name: agent.name,
+            purpose: agent.purpose,
+            personality: agent.personality,
+            knowledge: agent.knowledge_sources.join('\n')
         };
         this.isEditing = true;
         this.showEditor = true
@@ -78,16 +84,23 @@ class AgentManager {
             personality: this.formData.personality.trim(),
             knowledge_sources: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
         }
-        const result = this.isEditing && this.selectedId
-            ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()
-            : await supabase.from('agents').insert(payload).select().single()
-        if (result.error) this.errorMessage = result.error.message
-        else {
-            const saved = result.data as Agent
-            this.agents = this.isEditing
-                ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
-                : [saved, ...this.agents]
-            this.selectedId = saved.id
+        if (this.isProduction) {
+            const result = this.isEditing && this.selectedId
+                ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()
+                : await supabase.from('agents').insert(payload).select().single();
+            if (result.error) this.errorMessage = result.error.message
+            else {
+                const saved = result.data as Agent
+                this.agents = this.isEditing
+                    ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
+                    : [saved, ...this.agents]
+                this.selectedId = saved.id
+                this.showEditor = false
+                this.notice = this.isEditing ? 'Agent updated' : 'Agent created'
+                this.messages = []
+            }
+        } else {
+            console.info("save locally");
             this.showEditor = false
             this.notice = this.isEditing ? 'Agent updated' : 'Agent created'
             this.messages = []
