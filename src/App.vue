@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import * as Manager from './lib/manager';
+import { manager } from './lib/AgentManager';
 
 import AppHeader from './components/AppHeader.vue';
 import SideBar from './components/SideBar.vue';
@@ -8,7 +8,7 @@ import IntroPanel from './components/IntroPanel.vue';
 import AgentWorkspace from './components/AgentWorkspace.vue';
 import AgentEditor from './components/AgentEditor.vue';
 
-onMounted(Manager.loadAgents)
+onMounted(() => manager.loadAgents())
 </script>
 
 <template>
@@ -24,11 +24,11 @@ onMounted(Manager.loadAgents)
         <IntroPanel />
         <AgentWorkspace />
         
-        <div v-if="Manager.notice" class="toast">{{ Manager.notice }}</div>
-        <div v-if="Manager.errorMessage" class="error-banner">{{ Manager.errorMessage }}</div>
+        <div v-if="manager.notice" class="toast">{{ manager.notice }}</div>
+        <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>
       </main>
     </div>
-    <div v-if="Manager.showEditor" class="modal-backdrop" @click.self="Manager.toggleEditor">
+    <div v-if="manager.showEditor" class="modal-backdrop" @click.self="manager.toggleEditor">
       <AgentEditor />
     </div>
   </div>

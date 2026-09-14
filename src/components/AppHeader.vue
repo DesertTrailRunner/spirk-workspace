@@ -1,6 +1,6 @@
 <script lang='ts' setup>
 import { ref, reactive, onMounted } from 'vue';
-import * as Manager from '../lib/manager';
+import { manager } from '../lib/AgentManager';
 
 interface IProps {
 }
