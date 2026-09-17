@@ -679,10 +679,6 @@ button {
     margin-top: 0
   }
 
-  .agent-row {
-    display: none
-  }
-
   .agent-row.active {
     display: flex
   }

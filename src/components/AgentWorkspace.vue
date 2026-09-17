@@ -9,7 +9,7 @@ const containerRef = ref(null),
 </script>
 <template>
     <section v-if="manager.selectedAgent" class="agent-header">
-        <div><span class="eyebrow">AGENT WORKSPACE</span>
+        <div><span class="eyebrow">CHAT WITH YOUR AGENT</span>
             <h1>{{ manager.selectedAgent.name }}</h1>
             <p>{{ manager.selectedAgent.purpose }}</p>
         </div>
@@ -37,13 +37,13 @@ const containerRef = ref(null),
                     }}</span>
                 <p>{{ message.content }}</p>
             </div>
-            <div v-if="manager.isChatting && manager.selectedAgent" class="typing">{{ manager.selectedAgent.name }} is
+            <div v-if="manager.isSendingMessage && manager.selectedAgent" class="typing">{{ manager.selectedAgent.name }} is
                 thinking...</div>
         </div>
         <form v-if="manager.selectedAgent" class="composer" @submit.prevent="manager.sendMessage"><textarea
                 v-model="manager.messageInput" rows="1" :placeholder="`Message ${manager.selectedAgent.name}...`"
                 @keydown.enter.exact.prevent="manager.sendMessage"></textarea>
-            <button type="submit" class="send-button" :disabled="!manager.isSendMessageActive()"
+            <button type="submit" class="send-button" :disabled="!manager.isSendMessageActive() || manager.isSendingMessage"
                 title="Send message">↑</button>
         </form>
         <p class="disclaimer">AI makes mistakes and may misinterpret its source data. Check important information by verifying the sources and reading the context of where the information came from.</p>

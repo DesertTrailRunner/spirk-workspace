@@ -13,7 +13,7 @@ Create a `.env.local` file for local development and add:
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_MODEL=gpt-4o
 ```
 
 Run the SQL in `supabase/schema.sql` in the Supabase SQL editor. The app uses the `agents` table for CRUD and sends chat requests to the Vercel function in `api/chat.ts`. Keep `OPENAI_API_KEY` server-side and add it as a Vercel environment variable; only the two `VITE_` values belong in the browser.

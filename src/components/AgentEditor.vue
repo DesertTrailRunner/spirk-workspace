@@ -15,8 +15,8 @@ const containerRef = ref(null),
             </div><button type="button" class="close-button" @click="manager.cancelEditor">×</button>
         </div><label>Name<input v-model="manager.formData.name" required placeholder="e.g. Editorial partner"></label>
         <label>Purpose<textarea v-model="manager.formData.purpose" required rows="2"
-                placeholder="What is this agent here to help with?"></textarea></label><label>Personality<textarea
-                v-model="manager.formData.personality" rows="3"
+                placeholder="What is this agent here to help with?"></textarea></label>
+        <label>Personality<textarea v-model="manager.formData.personality" rows="3"
                 placeholder="Thoughtful, concise, curious..."></textarea></label>
         <label>Knowledge sources <span class="label-hint">one per line</span>
             <textarea v-model="manager.formData.knowledge" rows="4"

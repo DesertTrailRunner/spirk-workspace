@@ -7,6 +7,7 @@ import { supabase } from './supabase'
 import type { Agent } from './types/Agent'
 import type { Message } from './types/Message'
 import type { Template } from './types/Template'
+import * as ChatGPT from '../api/chat';
 
 class AgentManager {
     public isProduction: boolean = import.meta.env.PROD;
@@ -18,13 +19,14 @@ class AgentManager {
     }
 
     // state
-    public step: string = 'intro'; // loading | intro | choosing-template | editing | saving | chatting
+    public step: string = 'intro'; // loading | intro | choosing-template | editing | saving | chatting | sending-message
     public get isLoading(): boolean { return this.step === 'loading' }
     public get isIntro(): boolean { return this.step === 'intro' }
     public get isChoosingTemplates(): boolean { return this.step === 'choosing-template' }
     public get isEditing(): boolean { return this.step === 'editing' }
     public get isSaving(): boolean { return this.step === 'saving' }
     public get isChatting(): boolean { return this.step === 'chatting' }
+    public get isSendingMessage(): boolean { return this.step === 'sending-message' }
 
     // selections
     public isEditingExistingAgent: boolean = false;
@@ -174,24 +176,19 @@ class AgentManager {
     public async sendMessage() {
         const content = this.messageInput.trim();
         const agent = this.selectedAgent;
-        if (!content || !agent || this.isChatting) return;
+        if (!content || !agent || this.isSendingMessage) return;
+        this.step = 'sending-message';
         this.messages.push({ role: 'user', content });
         this.messageInput = '';
         this.errorMessage = '';
         // try to send message to LLM API and get response
         try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ agent, messages: this.messages }),
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error ?? 'The agent could not respond.');
-            this.messages.push({ role: 'assistant', content: data.content });
+            const response = await ChatGPT.sendMessage(agent, this.messages);
+            this.messages.push({ role: 'assistant', content: response });
         } catch (error) {
             this.errorMessage = error instanceof Error ? error.message : 'The agent could not respond.';
         } finally {
-            // this.isChatting = false
+            this.step = 'chatting';
         }
     }
 
