@@ -3,7 +3,7 @@ create table public.agents (
   name text not null,
   purpose text not null,
   personality text not null default '',
-  knowledge_sources text[] not null default '{}',
+  knowledge text[] not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

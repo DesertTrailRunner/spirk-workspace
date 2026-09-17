@@ -3,7 +3,7 @@ export type Agent = {
     name: string;
     purpose: string;
     personality: string;
-    knowledge_sources: string[];
+    knowledge: string[];
     created_at: string;
     updated_at: string
 };

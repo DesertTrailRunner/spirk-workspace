@@ -2,7 +2,7 @@ type Agent = {
   name: string
   purpose: string
   personality: string
-  knowledge_sources: string[]
+  knowledge: string[]
 }
 
 type ChatRequest = {
@@ -17,7 +17,7 @@ export default async function handler(request: Request): Promise<Response> {
   try {
     const { agent, messages } = await request.json() as ChatRequest
     if (!agent?.name || !Array.isArray(messages)) return Response.json({ error: 'Invalid chat request.' }, { status: 400 })
-    const knowledge = agent.knowledge_sources?.length ? `\n\nKnowledge sources:\n${agent.knowledge_sources.map((source) => `- ${source}`).join('\n')}` : ''
+    const knowledge = agent.knowledge?.length ? `\n\nKnowledge sources:\n${agent.knowledge.map((source) => `- ${source}`).join('\n')}` : ''
     const openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },

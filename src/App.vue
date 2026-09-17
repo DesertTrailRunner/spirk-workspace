@@ -8,7 +8,10 @@ import IntroPanel from './components/IntroPanel.vue';
 import AgentWorkspace from './components/AgentWorkspace.vue';
 import AgentEditor from './components/AgentEditor.vue';
 
-onMounted(() => manager.loadAgents())
+onMounted(async () => {
+  await manager.loadTemplates();
+  await manager.loadAgents();
+})
 </script>
 
 <template>
@@ -22,7 +25,7 @@ onMounted(() => manager.loadAgents())
       </aside>
       <main class="main-content">
         <IntroPanel />
-        <AgentWorkspace />
+        <AgentWorkspace v-if="manager.agents.length>0" />
         
         <div v-if="manager.notice" class="toast">{{ manager.notice }}</div>
         <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>

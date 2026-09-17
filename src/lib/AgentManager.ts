@@ -1,16 +1,18 @@
 /**
  * AgentManager
- * @date 2026-09-14
+ * @date 2026-09-17
  */
 import { reactive } from 'vue'
 import { supabase } from './supabase'
 import type { Agent } from './types/Agent'
 import type { Message } from './types/Message'
+import type { Template } from './types/Template'
 
 class AgentManager {
     public isProduction: boolean = import.meta.env.PROD;
 
     public agents: Agent[] = [];
+    public templates: Template[] = [];
     public formData = {
         name: '', purpose: '', personality: '', knowledge: ''
     }
@@ -30,7 +32,14 @@ class AgentManager {
         return this.agents.find((agent) => agent.id === this.selectedId) ?? null;
     }
     public get knowledgeList(): string[] {
-        return this.selectedAgent?.knowledge_sources ?? [];
+        return this.selectedAgent?.knowledge ?? [];
+    }
+
+    public async loadTemplates() {
+        this.isLoading = true;
+        const config = await fetch('./config.json').then((res) => res.json())
+        this.templates = config.templates ?? [];
+        this.isLoading = false;
     }
 
     public async loadAgents() {
@@ -68,7 +77,7 @@ class AgentManager {
             name: agent.name,
             purpose: agent.purpose,
             personality: agent.personality,
-            knowledge: agent.knowledge_sources.join('\n')
+            knowledge: agent.knowledge.join('\n')
         };
         this.isEditing = true;
         this.showEditor = true
@@ -82,7 +91,7 @@ class AgentManager {
             name: this.formData.name.trim(),
             purpose: this.formData.purpose.trim(),
             personality: this.formData.personality.trim(),
-            knowledge_sources: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
+            knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
         }
         if (this.isProduction) {
             const result = this.isEditing && this.selectedId
