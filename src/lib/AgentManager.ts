@@ -172,24 +172,24 @@ class AgentManager {
     }
 
     public async sendMessage() {
-        const content = this.messageInput.trim()
-        const agent = this.selectedAgent
-        if (!content || !agent || this.isChatting) return
-        this.messages.push({ role: 'user', content })
-        this.messageInput = ''
-        this.errorMessage = ''
+        const content = this.messageInput.trim();
+        const agent = this.selectedAgent;
+        if (!content || !agent || this.isChatting) return;
+        this.messages.push({ role: 'user', content });
+        this.messageInput = '';
+        this.errorMessage = '';
         // try to send message to LLM API and get response
         try {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ agent, messages: this.messages }),
-            })
-            const data = await response.json()
-            if (!response.ok) throw new Error(data.error ?? 'The agent could not respond.')
-            this.messages.push({ role: 'assistant', content: data.content })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error ?? 'The agent could not respond.');
+            this.messages.push({ role: 'assistant', content: data.content });
         } catch (error) {
-            this.errorMessage = error instanceof Error ? error.message : 'The agent could not respond.'
+            this.errorMessage = error instanceof Error ? error.message : 'The agent could not respond.';
         } finally {
             // this.isChatting = false
         }
@@ -208,7 +208,7 @@ class AgentManager {
     }
 
     public isSendMessageActive(): boolean {
-        return !this.messageInput.trim() || this.isChatting
+        return this.messageInput.trim()!=''
     }
 }
 

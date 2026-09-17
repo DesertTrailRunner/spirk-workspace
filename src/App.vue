@@ -26,7 +26,7 @@ onMounted(async () => {
       <main class="main-content">
         <IntroPanel v-if="manager.isIntro" />
         <TemplatesList v-if="manager.isChoosingTemplates" />
-        <AgentWorkspace v-if="manager.agents.length>0 && manager.selectAgent!=null" />
+        <AgentWorkspace v-if="manager.isChatting" />
         
         <div v-if="manager.notice" class="toast">{{ manager.notice }}</div>
         <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>
@@ -511,8 +511,7 @@ button {
 .disclaimer {
   display: block;
   margin-top: 10px;
-  color: #9a978e;
-  font-size: 10px;
+  color: #4e3b00;
   text-align: center
 }
 

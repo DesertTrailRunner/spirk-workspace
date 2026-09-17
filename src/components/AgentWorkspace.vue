@@ -17,15 +17,18 @@ const containerRef = ref(null),
                 agent</button><button class="danger-button" title="Delete agent" @click="manager.deleteAgent">⌫</button></div> -->
     </section>
     <nav class="tabs"><button :class="{ active: manager.activeTab === 'workspace' }"
-            @click="manager.activeTab = 'workspace'">Chat</button><button :class="{ active: manager.activeTab === 'knowledge' }"
-            @click="manager.activeTab = 'knowledge'">Knowledge <span>{{ manager.knowledgeList.length }}</span></button></nav>
+            @click="manager.activeTab = 'workspace'">Chat</button><button
+            :class="{ active: manager.activeTab === 'knowledge' }" @click="manager.activeTab = 'knowledge'">Knowledge
+            <span>{{ manager.knowledgeList.length }}</span></button></nav>
     <section v-if="manager.selectedAgent && manager.activeTab === 'workspace'" class="chat-panel">
         <div v-if="!manager.messages.length" class="chat-empty">
             <div class="spark">✦</div>
             <h2>Say hello to {{ manager.selectedAgent.name }}</h2>
             <p>Your agent is ready. Ask it anything within its purpose.</p>
-            <div class="suggestions"><button @click="manager.messageInput = 'What can you help me with?'">What can you help me
-                    with?</button><button @click="manager.messageInput = 'Give me a quick introduction.'">Give me a quick
+            <div class="suggestions"><button @click="manager.messageInput = 'What can you help me with?'">What can you
+                    help me
+                    with?</button><button @click="manager.messageInput = 'Give me a quick introduction.'">Give me a
+                    quick
                     introduction.</button></div>
         </div>
         <div v-else class="messages">
@@ -34,13 +37,16 @@ const containerRef = ref(null),
                     }}</span>
                 <p>{{ message.content }}</p>
             </div>
-            <div v-if="manager.isChatting && manager.selectedAgent" class="typing">{{ manager.selectedAgent.name }} is thinking...</div>
+            <div v-if="manager.isChatting && manager.selectedAgent" class="typing">{{ manager.selectedAgent.name }} is
+                thinking...</div>
         </div>
-        <form v-if="manager.selectedAgent" class="composer" @submit.prevent="manager.sendMessage"><textarea v-model="manager.messageInput" rows="1"
-                :placeholder="`Message ${manager.selectedAgent.name}...`"
-                @keydown.enter.exact.prevent="manager.sendMessage"></textarea><button type="submit" class="send-button"
-                :disabled="manager.isSendMessageActive()" title="Send message">↑</button></form><small
-            class="disclaimer">AI can make mistakes. Check important information.</small>
+        <form v-if="manager.selectedAgent" class="composer" @submit.prevent="manager.sendMessage"><textarea
+                v-model="manager.messageInput" rows="1" :placeholder="`Message ${manager.selectedAgent.name}...`"
+                @keydown.enter.exact.prevent="manager.sendMessage"></textarea>
+            <button type="submit" class="send-button" :disabled="!manager.isSendMessageActive()"
+                title="Send message">↑</button>
+        </form>
+        <p class="disclaimer">AI makes mistakes and may misinterpret its source data. Check important information by verifying the sources and reading the context of where the information came from.</p>
     </section>
     <section v-else class="knowledge-panel">
         <div class="section-intro"><span class="eyebrow">CONTEXT LIBRARY</span>
@@ -51,7 +57,8 @@ const containerRef = ref(null),
             <div v-for="(source, index) in manager.knowledgeList" :key="source" class="source-item"><span
                     class="source-number">0{{ index + 1 }}</span><span>{{ source }}</span></div>
         </div>
-        <div v-else class="source-empty">No knowledge sources yet. <button v-if="manager.selectedAgent" @click="manager.editAgent(manager.selectedAgent)">Add one
+        <div v-else class="source-empty">No knowledge sources yet. <button v-if="manager.selectedAgent"
+                @click="manager.editAgent(manager.selectedAgent)">Add one
                 in the editor.</button></div>
     </section>
 </template>
