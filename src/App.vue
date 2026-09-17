@@ -3,10 +3,11 @@ import { onMounted } from 'vue'
 import { manager } from './lib/AgentManager';
 
 import AppHeader from './components/AppHeader.vue';
-import SideBar from './components/SideBar.vue';
+import AgentsList from './components/AgentsList.vue';
 import IntroPanel from './components/IntroPanel.vue';
 import AgentWorkspace from './components/AgentWorkspace.vue';
 import AgentEditor from './components/AgentEditor.vue';
+import TemplatesList from './components/TemplatesList.vue';
 
 onMounted(async () => {
   await manager.loadTemplates();
@@ -21,17 +22,18 @@ onMounted(async () => {
     </header>
     <div class="app-layout">
       <aside class="sidebar">
-        <SideBar />
+        <AgentsList />
       </aside>
       <main class="main-content">
-        <IntroPanel />
-        <AgentWorkspace v-if="manager.agents.length>0" />
+        <IntroPanel v-if="manager.isIntroShowing" />
+        <TemplatesList v-if="manager.isShowingTemplates" />
+        <AgentWorkspace v-if="manager.agents.length>0 && manager.selectAgent!=null" />
         
         <div v-if="manager.notice" class="toast">{{ manager.notice }}</div>
         <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>
       </main>
     </div>
-    <div v-if="manager.showEditor" class="modal-backdrop" @click.self="manager.toggleEditor">
+    <div v-if="manager.isShowingEditor" class="modal-backdrop" @click.self="manager.toggleEditor">
       <AgentEditor />
     </div>
   </div>

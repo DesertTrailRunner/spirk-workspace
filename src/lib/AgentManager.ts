@@ -16,17 +16,23 @@ class AgentManager {
     public formData = {
         name: '', purpose: '', personality: '', knowledge: ''
     }
-    public selectedId: string | null = null;
+
+    // state
     public isLoading: boolean = false;
+    public isIntroShowing: boolean = true;
+    public isShowingTemplates: boolean = false;
+    public isShowingEditor: boolean = false;
     public isSaving: boolean = false;
+    public isEditing: boolean = false;
+    public isChatting: boolean = false;
+    public selectedTemplate: Template | null = null;
+    public selectedId: string | null = null;
+
     public notice: string = '';
     public errorMessage: string = '';
     public activeTab: 'workspace' | 'knowledge' = 'workspace';
-    public showEditor: boolean = false;
-    public isEditing: boolean = false;
     public messages: Message[] = [];
     public messageInput: string = '';
-    public isChatting: boolean = false;
 
     public get selectedAgent(): Agent | null {
         return this.agents.find((agent) => agent.id === this.selectedId) ?? null;
@@ -56,6 +62,14 @@ class AgentManager {
         }
         this.isLoading = false;
     }
+
+    public selectTemplate(template: Template) {
+        this.selectedTemplate = template;
+        this.isShowingTemplates = false;
+        this.isShowingEditor = true;
+        this.formData.knowledge = template.knowledge.join('\n');
+    }
+
     public selectAgent(agent: Agent) {
         this.selectedId = agent.id;
         this.messages = [];
@@ -69,7 +83,9 @@ class AgentManager {
     public newAgent() {
         this.resetForm();
         this.isEditing = false;
-        this.showEditor = true
+        this.isIntroShowing = false;
+        this.isShowingTemplates = true;
+        // this.isShowingEditor = true;
     }
     public editAgent(agent: Agent) {
         this.selectedId = agent.id;
@@ -80,7 +96,7 @@ class AgentManager {
             knowledge: agent.knowledge.join('\n')
         };
         this.isEditing = true;
-        this.showEditor = true
+        this.isShowingEditor = true
     }
 
     public async saveAgent() {
@@ -104,13 +120,13 @@ class AgentManager {
                     ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
                     : [saved, ...this.agents]
                 this.selectedId = saved.id
-                this.showEditor = false
+                this.isShowingEditor = false
                 this.notice = this.isEditing ? 'Agent updated' : 'Agent created'
                 this.messages = []
             }
         } else {
             console.info("save locally");
-            this.showEditor = false
+            this.isShowingEditor = false
             this.notice = this.isEditing ? 'Agent updated' : 'Agent created'
             this.messages = []
         }
@@ -156,8 +172,8 @@ class AgentManager {
     }
 
     public toggleEditor() {
-        this.showEditor = !this.showEditor
-        if (!this.showEditor) this.resetForm()
+        this.isShowingEditor = !this.isShowingEditor
+        if (!this.isShowingEditor) this.resetForm()
     }
 
     public isSaveActive(): boolean {
