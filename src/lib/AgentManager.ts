@@ -18,12 +18,13 @@ class AgentManager {
     }
 
     // state
-    public isLoading: boolean = false;
-    public isIntroShowing: boolean = true;
-    public isShowingTemplates: boolean = false;
-    public isShowingEditor: boolean = false;
-    public isSaving: boolean = false;
-    public isChatting: boolean = false;
+    public step: string = 'intro'; // loading | intro | choosing-template | editing | saving | chatting
+    public get isLoading(): boolean { return this.step === 'loading' }
+    public get isIntro(): boolean { return this.step === 'intro' }
+    public get isChoosingTemplates(): boolean { return this.step === 'choosing-template' }
+    public get isEditing(): boolean { return this.step === 'editing' }
+    public get isSaving(): boolean { return this.step === 'saving' }
+    public get isChatting(): boolean { return this.step === 'chatting' }
 
     // selections
     public isEditingExistingAgent: boolean = false;
@@ -43,15 +44,19 @@ class AgentManager {
         return this.selectedAgent?.knowledge ?? [];
     }
 
+    public async init() {
+        this.step = 'loading';
+        await this.loadTemplates();
+        await this.loadAgents();
+        this.step = 'intro';
+    }
+
     public async loadTemplates() {
-        this.isLoading = true;
         const config = await fetch('./config.json').then((res) => res.json())
         this.templates = config.templates ?? [];
-        this.isLoading = false;
     }
 
     public async loadAgents() {
-        this.isLoading = true;
         if (this.isProduction) {
             const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
             if (error) this.errorMessage = error.message
@@ -62,13 +67,11 @@ class AgentManager {
         } else {
             console.info("load locally");
         }
-        this.isLoading = false;
     }
 
     public selectTemplate(template: Template) {
         this.selectedTemplate = template;
-        this.isShowingTemplates = false;
-        this.isShowingEditor = true;
+        this.step = 'editing';
         this.formData.knowledge = template.knowledge.join('\n');
     }
 
@@ -76,7 +79,8 @@ class AgentManager {
         this.selectedId = agent.id;
         this.messages = [];
         this.activeTab = 'workspace';
-        this.notice = ''
+        this.notice = '';
+        this.step = 'chatting';
     }
 
     public resetForm() {
@@ -86,9 +90,7 @@ class AgentManager {
         this.resetForm();
         this.formData.personality = 'Professional';
         this.isEditingExistingAgent = false;
-        this.isIntroShowing = false;
-        this.isShowingTemplates = true;
-        // this.isShowingEditor = true;
+        this.step = 'choosing-template';
     }
     public editAgent(agent: Agent) {
         this.selectedId = agent.id;
@@ -99,12 +101,12 @@ class AgentManager {
             knowledge: agent.knowledge.join('\n')
         };
         this.isEditingExistingAgent = true;
-        this.isShowingEditor = true
+        this.step = 'editing';
     }
 
     public async saveAgent() {
         if (!this.formData.name.trim() || !this.formData.purpose.trim()) return
-        this.isSaving = true;
+        this.step = 'saving';
         this.errorMessage = ''
         const payload = {
             name: this.formData.name.trim(),
@@ -123,17 +125,16 @@ class AgentManager {
                     ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
                     : [saved, ...this.agents]
                 this.selectedId = saved.id
-                this.isShowingEditor = false
+                this.step = 'chatting'
                 this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
                 this.messages = []
             }
         } else {
             console.info("save locally");
-            this.isShowingEditor = false
+            this.step = 'chatting'
             this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
             this.messages = []
         }
-        this.isSaving = false
     }
 
     public async deleteAgent() {
@@ -155,7 +156,6 @@ class AgentManager {
         if (!content || !agent || this.isChatting) return
         this.messages.push({ role: 'user', content })
         this.messageInput = ''
-        this.isChatting = true
         this.errorMessage = ''
         // try to send message to LLM API and get response
         try {
@@ -170,14 +170,12 @@ class AgentManager {
         } catch (error) {
             this.errorMessage = error instanceof Error ? error.message : 'The agent could not respond.'
         } finally {
-            this.isChatting = false
+            // this.isChatting = false
         }
     }
 
     public cancelEditor() {
-        this.isShowingEditor = false;
-        this.isIntroShowing = this.selectedAgent === null;
-        if (!this.isShowingEditor) this.resetForm()
+        this.step = this.selectedAgent === null ? 'intro' : 'chatting';
     }
 
     public isSaveActive(): boolean {

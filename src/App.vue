@@ -10,8 +10,7 @@ import AgentEditor from './components/AgentEditor.vue';
 import TemplatesList from './components/TemplatesList.vue';
 
 onMounted(async () => {
-  await manager.loadTemplates();
-  await manager.loadAgents();
+  await manager.init();
 })
 </script>
 
@@ -25,15 +24,15 @@ onMounted(async () => {
         <AgentsList />
       </aside>
       <main class="main-content">
-        <IntroPanel v-if="manager.isIntroShowing" />
-        <TemplatesList v-if="manager.isShowingTemplates" />
+        <IntroPanel v-if="manager.isIntro" />
+        <TemplatesList v-if="manager.isChoosingTemplates" />
         <AgentWorkspace v-if="manager.agents.length>0 && manager.selectAgent!=null" />
         
         <div v-if="manager.notice" class="toast">{{ manager.notice }}</div>
         <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>
       </main>
     </div>
-    <div v-if="manager.isShowingEditor" class="modal-backdrop" @click.self="manager.cancelEditor">
+    <div v-if="manager.isEditing" class="modal-backdrop" @click.self="manager.cancelEditor">
       <AgentEditor />
     </div>
   </div>
