@@ -23,8 +23,10 @@ class AgentManager {
     public isShowingTemplates: boolean = false;
     public isShowingEditor: boolean = false;
     public isSaving: boolean = false;
-    public isEditing: boolean = false;
     public isChatting: boolean = false;
+
+    // selections
+    public isEditingExistingAgent: boolean = false;
     public selectedTemplate: Template | null = null;
     public selectedId: string | null = null;
 
@@ -82,7 +84,8 @@ class AgentManager {
     }
     public newAgent() {
         this.resetForm();
-        this.isEditing = false;
+        this.formData.personality = 'Professional';
+        this.isEditingExistingAgent = false;
         this.isIntroShowing = false;
         this.isShowingTemplates = true;
         // this.isShowingEditor = true;
@@ -95,7 +98,7 @@ class AgentManager {
             personality: agent.personality,
             knowledge: agent.knowledge.join('\n')
         };
-        this.isEditing = true;
+        this.isEditingExistingAgent = true;
         this.isShowingEditor = true
     }
 
@@ -110,24 +113,24 @@ class AgentManager {
             knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
         }
         if (this.isProduction) {
-            const result = this.isEditing && this.selectedId
+            const result = this.isEditingExistingAgent && this.selectedId
                 ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()
                 : await supabase.from('agents').insert(payload).select().single();
             if (result.error) this.errorMessage = result.error.message
             else {
                 const saved = result.data as Agent
-                this.agents = this.isEditing
+                this.agents = this.isEditingExistingAgent
                     ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
                     : [saved, ...this.agents]
                 this.selectedId = saved.id
                 this.isShowingEditor = false
-                this.notice = this.isEditing ? 'Agent updated' : 'Agent created'
+                this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
                 this.messages = []
             }
         } else {
             console.info("save locally");
             this.isShowingEditor = false
-            this.notice = this.isEditing ? 'Agent updated' : 'Agent created'
+            this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
             this.messages = []
         }
         this.isSaving = false
@@ -171,8 +174,9 @@ class AgentManager {
         }
     }
 
-    public toggleEditor() {
-        this.isShowingEditor = !this.isShowingEditor
+    public cancelEditor() {
+        this.isShowingEditor = false;
+        this.isIntroShowing = this.selectedAgent === null;
         if (!this.isShowingEditor) this.resetForm()
     }
 
