@@ -57,6 +57,10 @@ class AgentManager {
     }
 
     public async loadAgents() {
+        if (localStorage.getItem('agents')) {
+            this.agents = JSON.parse(localStorage.getItem('agents') ?? '[]');
+            // if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
+        }
         if (this.isProduction) {
             const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
             if (error) this.errorMessage = error.message
@@ -108,33 +112,50 @@ class AgentManager {
         if (!this.formData.name.trim() || !this.formData.purpose.trim()) return
         this.step = 'saving';
         this.errorMessage = ''
+        let agent: Agent = {
+            name: this.formData.name.trim(),
+            purpose: this.formData.purpose.trim(),
+            personality: this.formData.personality.trim(),
+            knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
+            id: this.isEditingExistingAgent && this.selectedId ? this.selectedId : crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        }
+        this.agents.push(agent);
+        localStorage.setItem('agents', JSON.stringify(this.agents));
+        this.selectedId = agent.id;
+        this.step = 'chatting';
+        this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created';
+        this.messages = [];
+
         const payload = {
             name: this.formData.name.trim(),
             purpose: this.formData.purpose.trim(),
             personality: this.formData.personality.trim(),
             knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
         }
-        if (this.isProduction) {
-            const result = this.isEditingExistingAgent && this.selectedId
-                ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()
-                : await supabase.from('agents').insert(payload).select().single();
-            if (result.error) this.errorMessage = result.error.message
-            else {
-                const saved = result.data as Agent
-                this.agents = this.isEditingExistingAgent
-                    ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
-                    : [saved, ...this.agents]
-                this.selectedId = saved.id
-                this.step = 'chatting'
-                this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
-                this.messages = []
-            }
-        } else {
-            console.info("save locally");
-            this.step = 'chatting'
-            this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
-            this.messages = []
-        }
+        // if (this.isProduction) {
+        //     const result = this.isEditingExistingAgent && this.selectedId
+        //         ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()
+        //         : await supabase.from('agents').insert(payload).select().single();
+        //     if (result.error) this.errorMessage = result.error.message
+        //     else {
+        //         const saved = result.data as Agent
+        //         this.agents = this.isEditingExistingAgent
+        //             ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
+        //             : [saved, ...this.agents]
+        //         this.selectedId = saved.id
+        //         this.step = 'chatting'
+        //         this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
+        //         this.messages = []
+        //     }
+        // } else {
+        //     console.info("save locally");
+        //     this.step = 'chatting'
+        //     this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
+        //     this.messages = []
+        // }
+
     }
 
     public async deleteAgent() {
