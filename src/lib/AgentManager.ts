@@ -19,14 +19,14 @@ class AgentManager {
     }
 
     // state
-    public step: string = 'intro'; // loading | intro | choosing-template | editing | saving | chatting | sending-message
+    public step: string = 'intro'; // loading | intro | choosing-template | editing | chatting
     public get isLoading(): boolean { return this.step === 'loading' }
     public get isIntro(): boolean { return this.step === 'intro' }
     public get isChoosingTemplates(): boolean { return this.step === 'choosing-template' }
     public get isEditing(): boolean { return this.step === 'editing' }
-    public get isSaving(): boolean { return this.step === 'saving' }
+    public isSaving: boolean = false;
     public get isChatting(): boolean { return this.step === 'chatting' }
-    public get isSendingMessage(): boolean { return this.step === 'sending-message' }
+    public isSendingMessage: boolean = false;
 
     // selections
     public isEditingExistingAgent: boolean = false;
@@ -64,6 +64,7 @@ class AgentManager {
             // if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
         }
         if (this.isProduction) {
+            console.log("load from supabase");
             const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
             if (error) this.errorMessage = error.message
             else {
@@ -112,7 +113,7 @@ class AgentManager {
 
     public async saveAgent() {
         if (!this.formData.name.trim() || !this.formData.purpose.trim()) return
-        this.step = 'saving';
+        this.isSaving = true;
         this.errorMessage = ''
         let agent: Agent = {
             name: this.formData.name.trim(),
@@ -126,6 +127,7 @@ class AgentManager {
         this.agents.push(agent);
         localStorage.setItem('agents', JSON.stringify(this.agents));
         this.selectedId = agent.id;
+        this.isSaving = false;
         this.step = 'chatting';
         this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created';
         this.messages = [];
@@ -177,7 +179,7 @@ class AgentManager {
         const content = this.messageInput.trim();
         const agent = this.selectedAgent;
         if (!content || !agent || this.isSendingMessage) return;
-        this.step = 'sending-message';
+        this.isSendingMessage = true;
         this.messages.push({ role: 'user', content });
         this.messageInput = '';
         this.errorMessage = '';
@@ -188,7 +190,7 @@ class AgentManager {
         } catch (error) {
             this.errorMessage = error instanceof Error ? error.message : 'The agent could not respond.';
         } finally {
-            this.step = 'chatting';
+            this.isSendingMessage = false;
         }
     }
 
