@@ -188,6 +188,25 @@ button {
   font-size: 20px
 }
 
+.delete-agent {
+  margin-top: 50px;
+  margin-bottom: 20px;
+  padding: 8px 10px;
+  border: 1px solid #c8c5bc;
+  border-radius: 4px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.delete-agent span {
+  margin-right: 8px;
+  color: var(--orange);
+  font-size: 12px;
+}
+
 .agent-row {
   display: flex;
   align-items: center;
