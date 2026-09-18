@@ -19,6 +19,7 @@ const containerRef = ref(null),
             <small>{{ agent.purpose }}</small></span>
         <span v-if="manager.isThisSelectedAgent(agent)" class="chevron">›</span>
     </button>
+    <button class="new-agent" @click="manager.deleteAgents"><span>-</span> Delete agents</button>
     <!-- <div class="sidebar-footer">? &nbsp; Help & documentation <span>↗</span></div> -->
 </template>
 <style scoped></style>

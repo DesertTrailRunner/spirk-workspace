@@ -221,6 +221,16 @@ class AgentManager {
     public isSendMessageActive(): boolean {
         return this.messageInput.trim()!=''
     }
+
+    public deleteAgents() {
+        if (!window.confirm(`Delete all agents?`)) return
+        this.agents = [];
+        this.selectedId = null;
+        this.messages = [];
+        localStorage.removeItem('agents');
+        this.notice = 'All agents deleted';
+        this.step = 'intro';
+    }
 }
 
 export const manager = reactive(new AgentManager());
