@@ -122,6 +122,14 @@ class AgentManager {
         return result.data as Agent
     }
 
+    public async saveTrackingToDatabase(action: string): Promise<void> {
+        const payload = {
+            author: this.authorName,
+            action: action
+        },
+         result = await supabase.from('tracking').insert(payload);
+    }
+
     public async saveAgent() {
         if (!this.formData.name.trim() || !this.formData.purpose.trim()) return
         this.isSaving = true;
@@ -199,6 +207,9 @@ class AgentManager {
         this.messages.push({ role: 'user', content });
         this.messageInput = '';
         this.errorMessage = '';
+
+        this.saveTrackingToDatabase("Send message: "+content.substring(0, 25)+"...");
+
         // try to send message to LLM API and get response
         try {
             const response = await ChatGPT.sendMessage(agent, this.messages);
