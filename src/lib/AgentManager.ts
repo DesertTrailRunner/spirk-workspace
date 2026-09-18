@@ -1,9 +1,9 @@
 /**
  * AgentManager
- * @date 2026-09-17
+ * @date 2026-09-18
  */
 import { reactive } from 'vue'
-import { supabase } from './supabase'
+import { supabase } from '../api/supabase'
 import type { Agent } from './types/Agent'
 import type { Message } from './types/Message'
 import type { Template } from './types/Template'
@@ -64,15 +64,15 @@ class AgentManager {
             // if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
         }
         if (this.isProduction) {
-            console.log("load from supabase");
-            const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
-            if (error) this.errorMessage = error.message
-            else {
-                this.agents = data ?? [];
-                if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
-            }
+            // console.log("load from supabase");
+            // const { data, error } = await supabase.from('agents').select('*').order('updated_at', { ascending: false })
+            // if (error) this.errorMessage = error.message
+            // else {
+            //     this.agents = data ?? [];
+            //     if (!this.selectedId && this.agents[0]) this.selectAgent(this.agents[0])
+            // }
         } else {
-            console.info("load locally");
+            // console.info("load locally");
         }
     }
 
@@ -111,6 +111,15 @@ class AgentManager {
         this.step = 'editing';
     }
 
+    public async saveAgentToDatabase(payload: Omit<Agent, 'id' | 'created_at' | 'updated_at'>, id?: string): Promise<Agent> {
+        const result = id
+            ? await supabase.from('agents').update(payload).eq('id', id).select().single()
+            : await supabase.from('agents').insert(payload).select().single()
+
+        if (result.error) throw result.error
+        return result.data as Agent
+    }
+
     public async saveAgent() {
         if (!this.formData.name.trim() || !this.formData.purpose.trim()) return
         this.isSaving = true;
@@ -136,8 +145,11 @@ class AgentManager {
             name: this.formData.name.trim(),
             purpose: this.formData.purpose.trim(),
             personality: this.formData.personality.trim(),
-            knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
+            knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean)
         }
+
+        await this.saveAgentToDatabase(payload, this.isEditingExistingAgent ? agent.id : undefined);
+
         // if (this.isProduction) {
         //     const result = this.isEditingExistingAgent && this.selectedId
         //         ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()

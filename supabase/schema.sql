@@ -20,4 +20,17 @@ create trigger agents_updated_at before update on public.agents
 for each row execute function public.set_updated_at();
 
 alter table public.agents enable row level security;
-create policy "Public agent access" on public.agents for all using (true) with check (true);
+drop policy if exists "Public agent access" on public.agents;
+create policy "Public agent select" on public.agents
+for select to anon, authenticated
+using (true);
+create policy "Public agent insert" on public.agents
+for insert to anon, authenticated
+with check (true);
+create policy "Public agent update" on public.agents
+for update to anon, authenticated
+using (true)
+with check (true);
+create policy "Public agent delete" on public.agents
+for delete to anon, authenticated
+using (true);
