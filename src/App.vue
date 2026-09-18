@@ -118,6 +118,17 @@ button {
   letter-spacing: .5px
 }
 
+.topbar-meta input {
+  margin-left: 7px;
+  padding: 5px 8px;
+  border: 1px solid #cecac0;
+  border-radius: 3px;
+  outline-color: var(--orange);
+  color: var(--ink);
+  background: #faf8f3;
+  font-size: 11px
+}
+
 .status-dot {
   display: inline-block;
   width: 6px;

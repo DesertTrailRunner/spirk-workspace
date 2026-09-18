@@ -12,6 +12,7 @@ import * as ChatGPT from '../api/chat';
 class AgentManager {
     public isProduction: boolean = import.meta.env.PROD;
 
+    public authorName: string = "";
     public agents: Agent[] = [];
     public templates: Template[] = [];
     public formData = {
@@ -48,6 +49,7 @@ class AgentManager {
 
     public async init() {
         this.step = 'loading';
+        this.authorName = localStorage.getItem('authorName') ?? 'anonymous';
         await this.loadTemplates();
         await this.loadAgents();
         this.step = 'intro';
@@ -131,7 +133,8 @@ class AgentManager {
             knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean),
             id: this.isEditingExistingAgent && this.selectedId ? this.selectedId : crypto.randomUUID(),
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
+            author: this.authorName.trim() || 'Anonymous'
         }
         this.agents.push(agent);
         localStorage.setItem('agents', JSON.stringify(this.agents));
@@ -142,10 +145,11 @@ class AgentManager {
         this.messages = [];
 
         const payload = {
-            name: this.formData.name.trim(),
-            purpose: this.formData.purpose.trim(),
-            personality: this.formData.personality.trim(),
-            knowledge: this.formData.knowledge.split('\n').map((item) => item.trim()).filter(Boolean)
+            name: agent.name,
+            purpose: agent.purpose,
+            personality: agent.personality,
+            knowledge: agent.knowledge,
+            author: agent.author
         }
 
         await this.saveAgentToDatabase(payload, this.isEditingExistingAgent ? agent.id : undefined);
@@ -220,6 +224,10 @@ class AgentManager {
 
     public isSendMessageActive(): boolean {
         return this.messageInput.trim()!=''
+    }
+
+    public updateAuthor() {
+        localStorage.setItem('authorName', this.authorName.trim());
     }
 
     public deleteAgents() {

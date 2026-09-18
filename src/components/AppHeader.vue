@@ -9,7 +9,7 @@ const containerRef = ref(null),
 </script>
 <template>
     <div class="brand"><span>EY Northeast Ohio Teens in Tech Workshop<span class="muted">/</span>agent</span></div>
-    <div class="topbar-meta"><span class="status-dot"></span> Workspace <span class="muted">/</span> personal</div>
-    <button class="avatar" title="Account">H</button>
+    <div class="topbar-meta"><span class="status-dot"></span> <input @change="manager.updateAuthor" type="text" v-model="manager.authorName" placeholder="Your name" /></div>
+    <button class="avatar" title="Account">EY</button>
 </template>
 <style scoped></style>
