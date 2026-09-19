@@ -24,17 +24,37 @@ export async function sendMessage(agent: Agent, messages: Array<{ role: 'user' |
     temperature = 0.7;
   if (!openai.apiKey) throw new Error('OPENAI_API_KEY is not configured.');
 
-  if (messages.length > 0 && messages[0] != undefined && messages[0].content != undefined) {
+  const latestMessage = messages.length>0 ? messages[messages.length-1] : undefined;
 
-    const knowledge = agent.knowledge?.length ? `\n\nSearch the following sources and include in your response:\n${agent.knowledge.map((source) => `- ${source}`).join('\n')}` : '';
+  if (messages.length > 0 && latestMessage!=undefined && latestMessage.content != undefined) {
 
-    const content = `You are ${agent.name}. Purpose: ${agent.purpose}\nPersonality: ${agent.personality || 'Helpful, thoughtful, and clear.'}${knowledge}\n\nUser: ${messages[0].content}`;
+    const knowledge = agent.knowledge?.length ? `\n\nSearch the following sources and use only this data in your response:\n${agent.knowledge.map((source) => `- ${source}`).join('\n')}\n\n` : '';
+
+    const knowledgeDomains = agent.knowledge?.length ? agent.knowledge.map((source) => {
+      try {
+        const url = new URL(source);
+        return url.hostname;
+      } catch {
+        return source;
+      }
+    }) : [];
+
+    const constraints = `STRICT CONSTRAINTS:\n1. You MUST use the web_search tool before answering any factual or current event question.\n2. STRICT GROUNDING: Answer ONLY using facts explicitly retrieved from search results.\n3. ABSENCE OF INFORMATION: If the search results do not explicitly contain the answer, reply: "I couldn't find any information about that on ESPN, CBS Sports, or Yahoo Sports."\n4. DO NOT use your pre-trained internal knowledge to fill in gaps.\n\n`;
+
+    const content = `You are the agent '${agent.name}'.\n\nPurpose: ${agent.purpose}\n\nPersonality: ${agent.personality || 'Helpful, thoughtful, and clear.'}\n\n${constraints}User: ${latestMessage.content}`;
 
     console.log(content);
 
     const response = await openai.responses.create({
       model: "gpt-4.1",
-      tools: [{ type: "web_search" }],
+      tools: [
+        {
+          type: "web_search",
+          filters: {
+            allowed_domains: knowledgeDomains
+          }
+        }
+      ],
       input: content
     });
 
