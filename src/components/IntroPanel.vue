@@ -10,8 +10,7 @@ const containerRef = ref(null),
 <template>
     <div v-if="!manager.selectedAgent" class="welcome-panel"><span class="eyebrow">AGENT STUDIO</span>
         <h1>Build your own <br><em>agent</em></h1>
-        <p>Design an AI companion with a point of view, a purpose, and the context to do its best work.</p><button
-            class="primary-button" @click="manager.newAgent">Create agent <span>→</span></button>
+        <p>Design an AI companion with a point of view, a purpose, and the context to do its best work.</p>
     </div>
 </template>
 <style scoped></style>
