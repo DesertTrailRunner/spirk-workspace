@@ -489,6 +489,30 @@ button {
   white-space: pre-wrap
 }
 
+.message .markdown-content {
+  margin-top: 6px;
+  line-height: 1.6
+}
+
+.markdown-content :first-child {
+  margin-top: 0
+}
+
+.markdown-content :last-child {
+  margin-bottom: 0
+}
+
+.markdown-content pre {
+  overflow-x: auto;
+  padding: 10px;
+  background: #efede7
+}
+
+.markdown-content code {
+  font-family: 'DM Mono', monospace;
+  font-size: .9em
+}
+
 .message.user p {
   display: inline-block;
   padding: 10px 14px;

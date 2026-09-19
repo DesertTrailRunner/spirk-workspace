@@ -1,11 +1,17 @@
 <script lang='ts' setup>
 import { ref, reactive, onMounted } from 'vue';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { manager } from '../lib/AgentManager';
 
 interface IProps {
 }
 const containerRef = ref(null),
     props = defineProps<IProps>();
+
+function renderMarkdown(content: string): string {
+    return DOMPurify.sanitize(marked.parse(content) as string);
+}
 </script>
 <template>
     <section v-if="manager.selectedAgent" class="agent-header">
@@ -35,7 +41,8 @@ const containerRef = ref(null),
             <div v-for="(message, index) in manager.messages" :key="index" class="message" :class="message.role"><span
                     class="message-label">{{ message.role === 'user' ? 'YOU' : manager.selectedAgent.name.toUpperCase()
                     }}</span>
-                <p>{{ message.content }}</p>
+                <p v-if="message.role === 'user'">{{ message.content }}</p>
+                <div v-else class="markdown-content" v-html="renderMarkdown(message.content)"></div>
             </div>
             <div v-if="manager.isSendingMessage && manager.selectedAgent" class="typing">{{ manager.selectedAgent.name }} is
                 thinking...</div>

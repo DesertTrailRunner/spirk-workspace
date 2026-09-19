@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
+    "dompurify": "^3.4.15",
+    "marked": "^18.0.13",
     "openai": "^7.19.0",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
