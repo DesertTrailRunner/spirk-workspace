@@ -11,7 +11,7 @@ const containerRef = ref(null),
     <form class="editor-modal" @submit.prevent="manager.saveAgent">
         <div class="modal-heading">
             <div><span class="eyebrow">{{ manager.isEditingExistingAgent ? 'EDIT AGENT' : 'NEW AGENT' }}</span>
-                <h2>Give it a point of view.</h2>
+                <h2>Describe your agent.</h2>
             </div><button type="button" class="close-button" @click="manager.cancelEditor">×</button>
         </div><label>Name<input v-model="manager.formData.name" required placeholder="e.g. Editorial partner"></label>
         <label>Purpose<textarea v-model="manager.formData.purpose" required rows="2"
