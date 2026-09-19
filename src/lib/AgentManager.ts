@@ -97,7 +97,7 @@ class AgentManager {
     }
     public newAgent() {
         this.resetForm();
-        this.formData.personality = 'Professional';
+        // this.formData.personality = 'Professional';
         this.isEditingExistingAgent = false;
         this.step = 'choosing-template';
     }
