@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * App
+ * @date 2026-09-19
+ */
 import { onMounted } from 'vue'
 import { manager } from './lib/AgentManager';
 
@@ -21,13 +25,13 @@ onMounted(async () => {
     </header>
     <div class="app-layout">
       <aside class="sidebar">
-        <AgentsList />
+        <AgentsList v-if="manager.isIntro" />
       </aside>
       <main class="main-content">
         <IntroPanel v-if="manager.isIntro" />
         <TemplatesList v-if="manager.isChoosingTemplates" />
         <AgentWorkspace v-if="manager.isChatting" />
-        
+
         <div v-if="manager.notice" class="toast">{{ manager.notice }}</div>
         <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>
       </main>
@@ -91,7 +95,8 @@ button {
   align-items: center;
   font-weight: 800;
   font-size: 17px;
-  letter-spacing: -.5px
+  letter-spacing: -.5px;
+  cursor: pointer;
 }
 
 .brand-mark {
