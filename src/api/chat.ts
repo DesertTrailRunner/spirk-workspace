@@ -39,7 +39,7 @@ export async function sendMessage(agent: Agent, messages: Array<{ role: 'user' |
       }
     }) : [];
 
-    const constraints = `STRICT CONSTRAINTS:\n1. You MUST use the web_search tool before answering any factual or current event question.\n2. STRICT GROUNDING: Answer ONLY using facts explicitly retrieved from search results.\n3. ABSENCE OF INFORMATION: If the search results do not explicitly contain the answer, reply: "I couldn't find any information about that on ESPN, CBS Sports, or Yahoo Sports."\n4. DO NOT use your pre-trained internal knowledge to fill in gaps.\n\n`;
+    const constraints = `STRICT CONSTRAINTS:\n1. You MUST use the web_search tool before answering any factual or current event question.\n2. STRICT GROUNDING: Answer ONLY using facts explicitly retrieved from search results.\n3. ABSENCE OF INFORMATION: If the search results do not explicitly contain the answer, reply: "I couldn't find any information about that on the provided knowledge sources."\n4. DO NOT use your pre-trained internal knowledge to fill in gaps.\n\n`;
 
     const content = `You are the agent '${agent.name}'.\n\nPurpose: ${agent.purpose}\n\nPersonality: ${agent.personality || 'Helpful, thoughtful, and clear.'}\n\n${constraints}User: ${latestMessage.content}`;
 
