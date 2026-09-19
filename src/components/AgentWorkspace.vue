@@ -10,7 +10,15 @@ const containerRef = ref(null),
     props = defineProps<IProps>();
 
 function renderMarkdown(content: string): string {
-    return DOMPurify.sanitize(marked.parse(content) as string);
+    const sanitizedHtml = DOMPurify.sanitize(marked.parse(content) as string);
+    const document = new DOMParser().parseFromString(sanitizedHtml, 'text/html');
+
+    document.querySelectorAll('a').forEach((link) => {
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+    });
+
+    return document.body.innerHTML;
 }
 </script>
 <template>
