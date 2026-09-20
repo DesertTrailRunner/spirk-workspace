@@ -39,6 +39,7 @@ class AgentManager {
     public activeTab: 'workspace' | 'knowledge' = 'workspace';
     public messages: Message[] = [];
     public messageInput: string = '';
+    private previousResponseId: string | undefined = undefined;
 
     public get selectedAgent(): Agent | null {
         return this.agents.find((agent) => agent.id === this.selectedId) ?? null;
@@ -92,9 +93,6 @@ class AgentManager {
         this.step = 'chatting';
     }
 
-    public resetForm() {
-        this.formData = { name: '', purpose: '', personality: '', knowledge: '' }
-    }
     public newAgent() {
         this.resetForm();
         // this.formData.personality = 'Professional';
@@ -150,8 +148,8 @@ class AgentManager {
         this.isSaving = false;
         this.step = 'chatting';
         this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created';
-        this.messages = [];
 
+        // also save to database
         const payload = {
             name: agent.name,
             purpose: agent.purpose,
@@ -159,30 +157,7 @@ class AgentManager {
             knowledge: agent.knowledge,
             author: agent.author
         }
-
         await this.saveAgentToDatabase(payload, this.isEditingExistingAgent ? agent.id : undefined);
-
-        // if (this.isProduction) {
-        //     const result = this.isEditingExistingAgent && this.selectedId
-        //         ? await supabase.from('agents').update(payload).eq('id', this.selectedId).select().single()
-        //         : await supabase.from('agents').insert(payload).select().single();
-        //     if (result.error) this.errorMessage = result.error.message
-        //     else {
-        //         const saved = result.data as Agent
-        //         this.agents = this.isEditingExistingAgent
-        //             ? this.agents.map((agent) => agent.id === saved.id ? saved : agent)
-        //             : [saved, ...this.agents]
-        //         this.selectedId = saved.id
-        //         this.step = 'chatting'
-        //         this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
-        //         this.messages = []
-        //     }
-        // } else {
-        //     console.info("save locally");
-        //     this.step = 'chatting'
-        //     this.notice = this.isEditingExistingAgent ? 'Agent updated' : 'Agent created'
-        //     this.messages = []
-        // }
 
     }
 
@@ -192,10 +167,9 @@ class AgentManager {
         const { error } = await supabase.from('agents').delete().eq('id', agent.id)
         if (error) this.errorMessage = error.message
         else {
-            this.agents = this.agents.filter((item) => item.id !== agent.id)
-            this.selectedId = this.agents[0]?.id ?? null
-            this.messages = []
-            this.notice = 'Agent deleted'
+            this.agents = this.agents.filter((item) => item.id !== agent.id);
+            this.notice = 'Agent deleted';
+            this.home();
         }
     }
 
@@ -212,8 +186,9 @@ class AgentManager {
 
         // try to send message to LLM API and get response
         try {
-            const response = await ChatGPT.sendMessage(agent, this.messages);
-            this.messages.push({ role: 'assistant', content: response });
+            const response = await ChatGPT.sendMessage(agent, this.messages, this.previousResponseId);
+            this.messages.push({ role: 'assistant', content: response.output_text ?? 'The agent could not respond.' });
+            this.previousResponseId = response.id;
         } catch (error) {
             this.errorMessage = error instanceof Error ? error.message : 'The agent could not respond.';
         } finally {
@@ -229,6 +204,10 @@ class AgentManager {
         this.step = 'intro';
         this.selectedId = null;
         this.messages = [];
+        this.previousResponseId = undefined;
+    }
+    public resetForm() {
+        this.formData = { name: '', purpose: '', personality: '', knowledge: '' }
     }
 
     public isSaveActive(): boolean {
@@ -250,11 +229,9 @@ class AgentManager {
     public deleteAgents() {
         if (!window.confirm(`Delete all agents?`)) return
         this.agents = [];
-        this.selectedId = null;
-        this.messages = [];
         localStorage.removeItem('agents');
         this.notice = 'All agents deleted';
-        this.step = 'intro';
+        this.home();
     }
 }
 

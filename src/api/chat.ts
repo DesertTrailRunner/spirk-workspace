@@ -1,5 +1,6 @@
 /**
  * ChatGPT API
+ * @date 2026-09-20
  */
 import OpenAI from 'openai';
 
@@ -15,18 +16,18 @@ type ChatRequest = {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>
 }
 
-export async function sendMessage(agent: Agent, messages: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string> {
+export async function sendMessage(agent: Agent, messages: Array<{ role: 'user' | 'assistant'; content: string }>, previousResponseId?: string): Promise<OpenAI.Responses.Response> {
   const openai = new OpenAI({
     apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     dangerouslyAllowBrowser: true
   });
   const model = import.meta.env.VITE_OPENAI_MODEL,
-    temperature = 0.7;
+    temperature = import.meta.env.VITE_OPENAI_TEMPERATURE ? parseFloat(import.meta.env.VITE_OPENAI_TEMPERATURE) : 0.7;
   if (!openai.apiKey) throw new Error('OPENAI_API_KEY is not configured.');
 
-  const latestMessage = messages.length>0 ? messages[messages.length-1] : undefined;
+  const latestMessage = messages.length > 0 ? messages[messages.length - 1] : undefined;
 
-  if (messages.length > 0 && latestMessage!=undefined && latestMessage.content != undefined) {
+  if (messages.length > 0 && latestMessage != undefined && latestMessage.content != undefined) {
 
     const knowledge = agent.knowledge?.length ? `\n\nSearch the following sources and use only this data in your response:\n${agent.knowledge.map((source) => `- ${source}`).join('\n')}\n\n` : '';
 
@@ -45,8 +46,13 @@ export async function sendMessage(agent: Agent, messages: Array<{ role: 'user' |
 
     console.log(content);
 
-    const response = await openai.responses.create({
-      model: "gpt-4.1",
+    const response: OpenAI.Responses.Response = await openai.responses.create({
+      model: model,
+      temperature: temperature,
+      previous_response_id: previousResponseId,
+      moderation: {
+        model: "omni-moderation-latest"
+      },
       tools: [
         {
           type: "web_search",
@@ -58,9 +64,9 @@ export async function sendMessage(agent: Agent, messages: Array<{ role: 'user' |
       input: content
     });
 
-    console.log(response.output);
+    console.log(response);
 
-    return response.output_text;
+    return response;
   } else {
     throw new Error('Invalid chat request.');
   }
