@@ -1,6 +1,15 @@
 {
     "templates": [
         {
+            "topic": "Animals",
+            "knowledge": [
+                "https://www.nationalgeographic.com/animals/",
+                "https://www.worldwildlife.org/",
+                "https://www.animalplanet.com/"
+            ],
+            "instructions": ""
+        },
+        {
             "topic": "Browns",
             "knowledge": [
                 "https://www.espn.com/",
