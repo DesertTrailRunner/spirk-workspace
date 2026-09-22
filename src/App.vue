@@ -36,7 +36,7 @@ onMounted(async () => {
         <div v-if="manager.errorMessage" class="error-banner">{{ manager.errorMessage }}</div>
       </main>
     </div>
-    <div v-if="manager.isEditing" class="modal-backdrop" @click.self="manager.cancelEditor">
+    <div v-if="manager.isEditing" class="modal-backdrop">
       <AgentEditor />
     </div>
   </div>
